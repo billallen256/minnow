@@ -32,3 +32,15 @@ func TestReadBytes(t *testing.T) {
 		t.Errorf("Received zero bytes")
 	}
 }
+
+func TestIsDir(t *testing.T) {
+	if !Path("/usr").IsDir() {
+		t.Errorf("Path should be a directory")
+	}
+}
+
+func TestIsNotDir(t *testing.T) {
+	if Path("/etc/passwd").IsDir() {
+		t.Errorf("Path should not be a directory")
+	}
+}
