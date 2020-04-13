@@ -7,10 +7,10 @@ import (
 )
 
 type Config struct {
-	IngestPath Path
-	IngestMinAge time.Duration
-	WorkPath Path
-	WorkAgeOff time.Duration
+	IngestPath               Path
+	IngestMinAge             time.Duration
+	WorkPath                 Path
+	WorkAgeOff               time.Duration
 	ProcessorDefinitionsPath Path
 }
 
@@ -59,7 +59,7 @@ func ParseConfig(configProperties Properties) (Config, error) {
 	ingestMinAgeStr, found := configProperties["ingest_min_age"]
 
 	if !found {
-		ingestMinAgeStr = "300"  // set default of five minutes
+		ingestMinAgeStr = "300" // set default of five minutes
 	}
 
 	ingestMinAgeInt, err := strconv.Atoi(ingestMinAgeStr)
@@ -91,7 +91,7 @@ func ParseConfig(configProperties Properties) (Config, error) {
 	workAgeOffStr, found := configProperties["work_age_off"]
 
 	if !found {
-		workAgeOffStr = "172800"  // set default of two days
+		workAgeOffStr = "172800" // set default of two days
 	}
 
 	workAgeOffInt, err := strconv.Atoi(workAgeOffStr)

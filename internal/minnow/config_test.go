@@ -30,7 +30,7 @@ func TestParseConfig(t *testing.T) {
 		t.Errorf("Incorrect IngestPath")
 	}
 
-	if config.IngestMinAge != time.Duration(600) * time.Second {
+	if config.IngestMinAge != time.Duration(600)*time.Second {
 		t.Errorf("Incorrect IngestMinAge")
 	}
 
@@ -38,7 +38,7 @@ func TestParseConfig(t *testing.T) {
 		t.Errorf("Incorrect WorkPath")
 	}
 
-	if config.WorkAgeOff != time.Duration(86400) * time.Second {
+	if config.WorkAgeOff != time.Duration(86400)*time.Second {
 		t.Errorf("Incorrect WorkAgeOff")
 	}
 
