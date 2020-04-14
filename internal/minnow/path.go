@@ -64,6 +64,28 @@ func (p Path) IsDir() bool {
 	return false
 }
 
+func (p Path) IsFile() bool {
+	absPath, err := filepath.Abs(string(p))
+
+	if err != nil {
+		return false
+	}
+
+	stat, err := os.Stat(absPath)
+
+	if err != nil {
+		return false
+	}
+
+	mode := stat.Mode()
+
+	if mode.IsRegular() {
+		return true
+	}
+
+	return false
+}
+
 func (p Path) Glob(pattern string) ([]Path, error) {
 	if !p.IsDir() {
 		return nil, fmt.Errorf("Glob only works on directories: %s", p)
@@ -122,4 +144,19 @@ func (p Path) WithSuffix(suffix string) Path {
 
 	withoutOldSuffix := pStr[0:len(pStr)-oldSuffixLen]
 	return Path(withoutOldSuffix + suffix)
+}
+
+func (p Path) Touch() error {
+	if p.Exists() {
+		return nil
+	}
+
+	f, err := os.Create(string(p))
+
+	if err != nil {
+		return err
+	}
+
+	f.Close()
+	return nil
 }
