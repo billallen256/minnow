@@ -68,3 +68,18 @@ func TestGlob(t *testing.T) {
 		}
 	}
 }
+
+func suffixTest(orig, newSuffix, target string, t *testing.T) {
+	changed := Path(orig).WithSuffix(newSuffix)
+
+	if changed != Path(target) {
+		t.Errorf("WithSuffix failed: %s != %s", changed, target)
+	}
+}
+
+func TestWithSuffix(t *testing.T) {
+	suffixTest("foo.bar", "baz", "foo.baz", t)
+	suffixTest("foo", "baz", "foo.baz", t)
+	suffixTest("/foo/bar/baz.a", "baz", "/foo/bar/baz.baz", t)
+	suffixTest("/foo/bar.a/baz.zip", "", "/foo/bar.a/baz", t)
+}

@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Path string
@@ -98,4 +99,27 @@ func (p Path) Resolve() (Path, error) {
 	}
 
 	return Path(absPath), nil
+}
+
+func (p Path) WithSuffix(suffix string) Path {
+	pStr := string(p)
+	suffix = strings.TrimSpace(suffix)
+	oldSuffix := filepath.Ext(pStr)
+
+	if len(oldSuffix) == 0 && len(suffix) == 0 {
+		return p
+	}
+
+	if len(oldSuffix) == 0 && len(suffix) > 0 {
+		return Path(pStr + "." + suffix)
+	}
+
+	oldSuffixLen := len(oldSuffix)
+
+	if len(suffix) > 0 {
+		oldSuffixLen -= 1  // don't include the dot for removal
+	}
+
+	withoutOldSuffix := pStr[0:len(pStr)-oldSuffixLen]
+	return Path(withoutOldSuffix + suffix)
 }
