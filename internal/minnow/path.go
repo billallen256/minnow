@@ -89,3 +89,13 @@ func (p Path) Glob(pattern string) ([]Path, error) {
 
 	return matchPaths, nil
 }
+
+func (p Path) Resolve() (Path, error) {
+	absPath, err := filepath.Abs(string(p))
+
+	if err != nil {
+		return p, err
+	}
+
+	return Path(absPath), nil
+}

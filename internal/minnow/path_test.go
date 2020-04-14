@@ -44,3 +44,27 @@ func TestIsNotDir(t *testing.T) {
 		t.Errorf("Path should not be a directory")
 	}
 }
+
+func TestGlob(t *testing.T) {
+	paths, err := Path("/etc").Glob("*.conf")
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if len(paths) == 0 {
+		t.Errorf("/etc/*.conf returned no results")
+	}
+
+	for _, path := range paths {
+		absPath, err := path.Resolve()
+
+		if err != nil {
+			t.Errorf(err.Error())
+		}
+
+		if path != absPath {
+			t.Errorf("Glob should only return absolute paths")
+		}
+	}
+}
