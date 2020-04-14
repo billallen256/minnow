@@ -120,3 +120,18 @@ func TestTouch(t *testing.T) {
 		t.Errorf("Touch failed for path %s", p)
 	}
 }
+
+func TestAge(t *testing.T) {
+	p := Path("/tmp/pathlib-" + randomString(20))
+	p.Touch()
+	time.Sleep(time.Duration(2) * time.Second)
+	age, err := p.Age(time.Now())
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if age < time.Duration(2) * time.Second || age > time.Duration(2500) * time.Millisecond {
+		t.Errorf("Received incorrect age of %s", age)
+	}
+}

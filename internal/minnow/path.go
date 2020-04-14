@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 type Path string
@@ -159,4 +160,24 @@ func (p Path) Touch() error {
 
 	f.Close()
 	return nil
+}
+
+func (p Path) Age(now time.Time) (time.Duration, error) {
+	if !p.Exists() {
+		return time.Duration(0), fmt.Errorf("%s does not exist", p)
+	}
+
+	absPath, err := filepath.Abs(string(p))
+
+	if err != nil {
+		return time.Duration(0), err
+	}
+
+	stat, err := os.Stat(absPath)
+
+	if err != nil {
+		return time.Duration(0), err
+	}
+
+	return now.Sub(stat.ModTime()), nil
 }
