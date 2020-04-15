@@ -121,7 +121,13 @@ func (p Path) Resolve() (Path, error) {
 		return p, err
 	}
 
-	return Path(absPath), nil
+	resolvedPath := Path(absPath)
+
+	if !resolvedPath.Exists() {
+		return p, fmt.Errorf("Cannot resolve path that does not exist: %s", resolvedPath)
+	}
+
+	return resolvedPath, nil
 }
 
 func (p Path) WithSuffix(suffix string) Path {

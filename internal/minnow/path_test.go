@@ -20,6 +20,28 @@ func randomString(length int) string {
 	return builder.String()
 }
 
+func TestResolve(t *testing.T) {
+	p := Path("/etc/../etc/passwd")
+	resolved, err := p.Resolve()
+
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+
+	if resolved != Path("/etc/passwd") {
+		t.Errorf("Path did not resolve correctly: %s", resolved)
+	}
+}
+
+func TestNoResolve(t *testing.T) {
+	p := Path("fjdksafdsljakfldsjf")
+	_, err := p.Resolve()
+
+	if err == nil {
+		t.Errorf("Resolve should fail for non-existent paths")
+	}
+}
+
 func TestExists(t *testing.T) {
 	p := Path("/usr")
 
