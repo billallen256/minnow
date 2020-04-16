@@ -153,7 +153,22 @@ func TestAge(t *testing.T) {
 		t.Errorf(err.Error())
 	}
 
-	if age < time.Duration(2) * time.Second || age > time.Duration(2500) * time.Millisecond {
+	if age < time.Duration(2)*time.Second || age > time.Duration(2500)*time.Millisecond {
 		t.Errorf("Received incorrect age of %s", age)
+	}
+}
+
+func TestJoinPath(t *testing.T) {
+	tests := map[Path]Path{
+		Path("/tmp/").JoinPath(Path("foo"), Path("bar")): Path("/tmp/foo/bar"),
+		Path("/tmp").JoinPath(Path("foo/bar")):           Path("/tmp/foo/bar"),
+		Path("foo").JoinPath(Path("bar")):                Path("foo/bar"),
+		Path("foo/bar").JoinPath(Path("baz")):            Path("foo/bar/baz"),
+	}
+
+	for test, target := range tests {
+		if test != target {
+			t.Errorf("JoinPath failed: %s != %s", test, target)
+		}
 	}
 }

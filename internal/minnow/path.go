@@ -87,6 +87,22 @@ func (p Path) IsFile() bool {
 	return false
 }
 
+func (p Path) Permissions() (os.FileMode, error) {
+	absPath, err := filepath.Abs(string(p))
+
+	if err != nil {
+		return 0, err
+	}
+
+	stat, err := os.Stat(absPath)
+
+	if err != nil {
+		return 0, err
+	}
+
+	return stat.Mode().Perm(), nil
+}
+
 func (p Path) Glob(pattern string) ([]Path, error) {
 	if !p.IsDir() {
 		return nil, fmt.Errorf("Glob only works on directories: %s", p)
@@ -146,10 +162,10 @@ func (p Path) WithSuffix(suffix string) Path {
 	oldSuffixLen := len(oldSuffix)
 
 	if len(suffix) > 0 {
-		oldSuffixLen -= 1  // don't include the dot for removal
+		oldSuffixLen -= 1 // don't include the dot for removal
 	}
 
-	withoutOldSuffix := pStr[0:len(pStr)-oldSuffixLen]
+	withoutOldSuffix := pStr[0 : len(pStr)-oldSuffixLen]
 	return Path(withoutOldSuffix + suffix)
 }
 
@@ -186,4 +202,14 @@ func (p Path) Age(now time.Time) (time.Duration, error) {
 	}
 
 	return now.Sub(stat.ModTime()), nil
+}
+
+func (p Path) JoinPath(paths ...Path) Path {
+	ret := string(p)
+
+	for _, path := range paths {
+		ret = filepath.Join(ret, string(path))
+	}
+
+	return Path(ret)
 }
