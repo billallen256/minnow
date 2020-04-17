@@ -7,6 +7,10 @@ import (
 	"strings"
 )
 
+const (
+	PropertiesExtension = ".properties"
+)
+
 type Properties map[string]string
 
 func BytesToProperties(input []byte) (Properties, error) {
