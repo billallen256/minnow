@@ -213,3 +213,7 @@ func (p Path) JoinPath(paths ...Path) Path {
 
 	return Path(ret)
 }
+
+func (p Path) Name() string {
+	return filepath.Base(string(p))
+}
