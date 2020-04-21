@@ -1,21 +1,54 @@
 package minnow
 
 import (
-	"fmt"
+	"log"
+	"os"
+	"time"
 )
 
-func start(args []string) int {
+func Start(args []string) int {
+	logger := log.New(os.Stdout, "Minnow: ", 0)
+
 	if len(args) != 1 {
-		fmt.Println("Must specify a config file")
+		logger.Print("Must specify a config file")
 		return 1
 	}
 
-	config, err := ReadConfig(args[1])
+	config, err := ReadConfig(Path(args[1]))
 
 	if err != nil {
-		fmt.Println(err.Error())
+		logger.Print(err.Error())
 		return 1
 	}
 
-	ingestChan := make(chan IngestInfo, 1000)
+	dispatchChan := make(chan DispatchInfo, 1000)
+	ingestDirChan := make(chan IngestDirInfo, 1000)
+	defer close(ingestDirChan)
+	defer close(dispatchChan)
+
+	processorRegistry, err := NewProcessorRegistry(config.ProcessorDefinitionsPath)
+
+	if err != nil {
+		logger.Print(err.Error())
+		return 1
+	}
+
+	dispatcher, err := NewDispatcher(config.WorkPath, dispatchChan, ingestDirChan, processorRegistry)
+
+	if err != nil {
+		logger.Print(err.Error())
+		return 1
+	}
+
+	directoryIngester := NewDirectoryIngester(ingestDirChan, dispatchChan)
+
+	go dispatcher.Run()
+	go directoryIngester.Run()
+	go processorRegistry.Run()
+
+	for range time.Tick(config.IngestMinAge) {
+		ingestDirChan <- IngestDirInfo{config.IngestPath, config.IngestMinAge, make([]ProcessorId, 0)}
+	}
+
+	return 0
 }

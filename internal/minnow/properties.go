@@ -45,3 +45,13 @@ func BytesToProperties(input []byte) (Properties, error) {
 
 	return properties, nil
 }
+
+func PropertiesFromFile(path Path) (Properties, error) {
+	propertiesBytes, err := path.ReadBytes()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return BytesToProperties(propertiesBytes)
+}

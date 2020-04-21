@@ -19,7 +19,7 @@ func TestBasicPropertiesMatchHookMatch(t *testing.T) {
 	propertiesStr := "type=foo\nvolume=11\nbar = baz"
 	propertiesBytes := bytes.NewBufferString(propertiesStr).Bytes()
 
-	if !hook.Matches(propertiesBytes) {
+	if !hook.MatchesBytes(propertiesBytes) {
 		t.Errorf("Hook should have matched")
 	}
 }
@@ -38,7 +38,7 @@ func TestBasicPropertiesMatchHookNoMatch(t *testing.T) {
 	propertiesStr := "type=foo\nvolume=12\nbar = baz"
 	propertiesBytes := bytes.NewBufferString(propertiesStr).Bytes()
 
-	if hook.Matches(propertiesBytes) {
+	if hook.MatchesBytes(propertiesBytes) {
 		t.Errorf("Hook should not have matched")
 	}
 

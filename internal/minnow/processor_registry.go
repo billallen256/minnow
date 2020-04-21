@@ -2,7 +2,9 @@ package minnow
 
 import (
 	"log"
+	"os"
 	"sync"
+	"time"
 )
 
 type ProcessorRegistry struct {
@@ -24,18 +26,17 @@ func NewProcessorRegistry(definitionsPath Path) (*ProcessorRegistry, error) {
 		return nil, err
 	}
 
-	// Start a goroutine to periodically scan for added/removed processors.
-	go func(registry *ProcessorRegistry) {
-		for range time.Tick(time.Duration(5) * time.Minute) {
-			err := registry.BuildProcessorMap()
+	return registry, nil
+}
 
-			if err != nil {
-				registry.logger.Print(err.Error())
-			}
+func (registry *ProcessorRegistry) Run() {
+	for range time.Tick(time.Duration(5) * time.Minute) {
+		err := registry.BuildProcessorMap()
+
+		if err != nil {
+			registry.logger.Print(err.Error())
 		}
-	}(registry)
-
-	return registry
+	}
 }
 
 func (registry *ProcessorRegistry) BuildProcessorMap() error {
@@ -50,7 +51,7 @@ func (registry *ProcessorRegistry) BuildProcessorMap() error {
 
 	for _, definitionPath := range definitionPaths {
 		if definitionPath.IsDir() {
-			definitionDirPaths = append(definitionDirPaths, definitionPaths)
+			definitionDirPaths = append(definitionDirPaths, definitionPath)
 		}
 	}
 
@@ -70,10 +71,20 @@ func (registry *ProcessorRegistry) BuildProcessorMap() error {
 	registry.mutex.Lock()
 	defer registry.mutex.Unlock()
 	registry.processors = processors
+	return nil
 }
 
-func (registry *ProcessorRegistry) MatchingProcessors(metadata Properties) []*Processor {
+func (registry *ProcessorRegistry) MatchingProcessors(metadata Properties) []Processor {
 	registry.mutex.RLock()
 	defer registry.mutex.RUnlock()
 
+	matchingProcessors := make([]Processor, 0)
+
+	for _, processor := range registry.processors {
+		if processor.HookMatches(metadata) {
+			matchingProcessors = append(matchingProcessors, processor)
+		}
+	}
+
+	return matchingProcessors
 }

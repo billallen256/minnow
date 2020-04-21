@@ -15,18 +15,7 @@ type Config struct {
 }
 
 func ReadConfig(path Path) (Config, error) {
-	if !path.Exists() {
-		err := fmt.Errorf("Config file does not exist at %s\n", path)
-		return Config{}, err
-	}
-
-	configBytes, err := path.ReadBytes()
-
-	if err != nil {
-		return Config{}, err
-	}
-
-	configProperties, err := BytesToProperties(configBytes)
+	configProperties, err := PropertiesFromFile(path)
 
 	if err != nil {
 		return Config{}, err

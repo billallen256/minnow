@@ -1,16 +1,18 @@
 package minnow
 
 import (
+	"fmt"
 	"io"
+	"os"
 )
 
-func Copy(source, destination Path) error {
+func CopyFile(source, destination Path) error {
 	if source.IsDir() {
 		return fmt.Errorf("Cannot use Copy for a directory: %s", source)
 	}
 
 	if destination.IsDir() {
-		destination = destination.JoinPath(source.Name())
+		destination = destination.JoinPath(Path(source.Name()))
 	}
 
 	if source == destination {
@@ -25,7 +27,7 @@ func Copy(source, destination Path) error {
 
 	defer from.Close()
 
-	perms, err := source.Permissions() | 0600
+	perms, err := source.Permissions()
 
 	if err != nil {
 		return err

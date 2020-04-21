@@ -1,22 +1,27 @@
 package minnow
 
 type Hook interface {
-	Matches([]byte) bool
+	MatchesBytes([]byte) bool
+	Matches(Properties) bool
 }
 
 type BasicPropertiesMatchHook struct {
 	match Properties
 }
 
-func (hook BasicPropertiesMatchHook) Matches(matchAgainst []byte) bool {
-	properties, err := BytesToProperties(matchAgainst)
+func NewBasicPropertiesMatchHookFromFile(path Path) (BasicPropertiesMatchHook, error) {
+	hookProperties, err := PropertiesFromFile(path)
 
 	if err != nil {
-		return false
+		return BasicPropertiesMatchHook{}, err
 	}
 
+	return BasicPropertiesMatchHook{hookProperties}, nil
+}
+
+func (hook BasicPropertiesMatchHook) Matches(matchAgainst Properties) bool {
 	for expectedKey, expectedValue := range hook.match {
-		if value, found := properties[expectedKey]; found {
+		if value, found := matchAgainst[expectedKey]; found {
 			if value != expectedValue {
 				return false
 			}
@@ -24,4 +29,14 @@ func (hook BasicPropertiesMatchHook) Matches(matchAgainst []byte) bool {
 	}
 
 	return true
+}
+
+func (hook BasicPropertiesMatchHook) MatchesBytes(matchAgainst []byte) bool {
+	properties, err := BytesToProperties(matchAgainst)
+
+	if err != nil {
+		return false
+	}
+
+	return hook.Matches(properties)
 }

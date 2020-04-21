@@ -3,54 +3,79 @@ package minnow
 import (
 	"fmt"
 	"log"
+	"os"
 )
 
-type Dispatcher struct {
-	WorkPath     Path
-	IngestChan   chan IngestInfo
-	ProcessorReg *ProcessorRegistry
-	Logger       *log.Logger
+type DispatchInfo struct {
+	MetadataPath Path
+	DataPath     Path
+	ProcessedBy  []ProcessorId
 }
 
-func NewDispatcher(workPath Path, ingestChan chan IngestInfo, processorReg *ProcessorRegistry) (*Dispatcher, error) {
+type Dispatcher struct {
+	workPath      Path
+	dispatchChan  chan DispatchInfo
+	ingestDirChan chan IngestDirInfo
+	processorReg  *ProcessorRegistry
+	logger        *log.Logger
+}
+
+func NewDispatcher(workPath Path, dispatchChan chan DispatchInfo, ingestDirChan chan IngestDirInfo, processorReg *ProcessorRegistry) (*Dispatcher, error) {
 	if !workPath.Exists() {
 		return nil, fmt.Errorf("Work path does not exist: %s", workPath)
 	}
 
 	logger := log.New(os.Stdout, "Dispatcher: ", 0)
-	return &Dispatcher{workPath, ingestChan, processorReg, logger}
+	return &Dispatcher{workPath, dispatchChan, ingestDirChan, processorReg, logger}, nil
 }
 
 func (dispatcher *Dispatcher) Run() {
-	for ingestInfo := range dispatcher.IngestChan {
-		metadata, err := PropertiesFromFile(ingestInfo.MetadataPath)
+	for dispatchInfo := range dispatcher.dispatchChan {
+		metadata, err := PropertiesFromFile(dispatchInfo.MetadataPath)
 
 		if err != nil {
-			dispatcher.Logger.Print(err.Error())
+			dispatcher.logger.Print(err.Error())
 			continue
 		}
 
-		matchingProcessors := dispatcher.ProcessorReg.MatchingProcessors(metadata)
+		matchingProcessors := dispatcher.processorReg.MatchingProcessors(metadata)
 
 		for _, processor := range matchingProcessors {
-			inputPath := makeRandomPath(dispatcher.WorkPath).Resolve()
-			outputPath := makeRandomPath(dispatcher.WorkPath).Resolve()
-			//copy metadata
-			err := Copy(metadataPath, inputPath)
+			inputPath, err := makeRandomPath(dispatcher.workPath).Resolve()
 
 			if err != nil {
-				dispatcher.Logger.Print("Error copying metadata to work path: %s", err.Error())
+				dispatcher.logger.Print("Error creating input path for dispatch: %s", err.Error())
 				continue
 			}
 
-			//copy data
-			err = Copy(dataPath, inputPath)
+			outputPath, err := makeRandomPath(dispatcher.workPath).Resolve()
+
 			if err != nil {
-				dispatcher.Logger.Print("Error copying data to work path: %s", err.Error())
+				dispatcher.logger.Print("Error creating output path for dispatch: %s", err.Error())
 				continue
 			}
 
-			go processor.Run(inputPath, outputPath, ingestInfo.ProcessedBy, dispatcher.IngestChan)
+			// copy metadata into the new input path
+			err = CopyFile(dispatchInfo.MetadataPath, inputPath)
+
+			if err != nil {
+				dispatcher.logger.Print("Error copying metadata to work path: %s", err.Error())
+				continue
+			}
+
+			// copy data into the new input path
+			err = CopyFile(dispatchInfo.DataPath, inputPath)
+			if err != nil {
+				dispatcher.logger.Print("Error copying data to work path: %s", err.Error())
+				continue
+			}
+
+			// copy the ProcessedBy slice so multiple processors
+			// don't update the same slice
+			processedByCopy := make([]ProcessorId, len(dispatchInfo.ProcessedBy))
+			copy(processedByCopy, dispatchInfo.ProcessedBy)
+
+			go processor.Run(inputPath, outputPath, processedByCopy, dispatcher.ingestDirChan)
 		}
 	}
 }

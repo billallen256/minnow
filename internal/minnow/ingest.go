@@ -1,59 +1,60 @@
 package minnow
 
 import (
-	"fmt"
+	"log"
 	"os"
+	"time"
 )
 
-type IngestInfo struct {
-	ProcessedBy  []ProcessorId
-	MetadataPath Path
-	DataPath     Path
+type IngestDirInfo struct {
+	IngestPath  Path
+	MinAge      time.Duration
+	ProcessedBy []ProcessorId
 }
 
 type DirectoryIngester struct {
-	IngestPath Path
-	MinAge     time.Duration
-	IngestChan chan IngestInfo
-	Logger     *log.Logger
+	ingestDirChan chan IngestDirInfo
+	dispatchChan  chan DispatchInfo
+	Logger        *log.Logger
 }
 
-func NewDirectoryIngester(path Path, minAge time.Duration, ingestChan chan<- IngestInfo) (*DirectoryIngester, error) {
-	if !path.Exists() {
-		return nil, fmt.Errorf("%s does not exist", path)
-	}
-
+func NewDirectoryIngester(ingestDirChan chan IngestDirInfo, dispatchChan chan DispatchInfo) *DirectoryIngester {
 	logger := log.New(os.Stdout, "DirectoryIngester: ", 0)
-	return &DirectoryIngester{path, minAge, ingestChan, logger}, nil
+	return &DirectoryIngester{ingestDirChan, dispatchChan, logger}
 }
 
-func (ingester *DirectoryIngester) Once(processedBy []ProcessorId) error {
-	pairsToIngest := make([]IngestInfo, 0)
-	metadataPaths, _ := ingester.IngestPath.Glob("*" + PropertiesExtension)
+func (ingester *DirectoryIngester) Run() {
+	for ingestDirInfo := range ingester.ingestDirChan {
+		pairsToDispatch := make([]DispatchInfo, 0)
+		metadataPaths, _ := ingestDirInfo.IngestPath.Glob("*" + PropertiesExtension)
 
-	for _, metadataPath := range metadataPaths {
-		dataPath := metadataPath.WithSuffix("") // lop off the extension
+		for _, metadataPath := range metadataPaths {
+			dataPath := metadataPath.WithSuffix("") // lop off the extension
 
-		if !dataPath.Exists() {
-			ingester.Logger.Print("%s does not have corresponding data file", metadataPath)
-			continue
-		}
+			if !dataPath.Exists() {
+				ingester.Logger.Print("%s does not have corresponding data file", metadataPath)
+				continue
+			}
 
-		now := time.Now()
+			now := time.Now()
+			metadataAge, err := metadataPath.Age(now)
 
-		if metadataPath.Age(now) > ingester.MinAge && dataPath.Age(now) > ingester.MinAge {
-			ingestInfo := IngestInfo{processedBy, metadataPath, datapath}
-			ingester.IngestChan <- ingestInfo
-		}
-	}
-}
+			if err != nil {
+				ingester.Logger.Print(err.Error())
+				continue
+			}
 
-func (ingester *DirectoryIngester) Periodic(interval time.Duration) {
-	for range time.Ticker(interval) {
-		err := ingester.Once(make([]ProcessorId, 0))
+			dataAge, err := dataPath.Age(now)
 
-		if err != nil {
-			ingester.Logger.Print(err.Error())
+			if err != nil {
+				ingester.Logger.Print(err.Error())
+				continue
+			}
+
+			if metadataAge > ingestDirInfo.MinAge && dataAge > ingestDirInfo.MinAge {
+				dispatchInfo := DispatchInfo{metadataPath, dataPath, ingestDirInfo.ProcessedBy}
+				ingester.dispatchChan <- dispatchInfo
+			}
 		}
 	}
 }
