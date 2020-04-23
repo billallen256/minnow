@@ -69,13 +69,14 @@ func (registry *ProcessorRegistry) BuildProcessorMap() error {
 		processors[processor.GetId()] = processor
 	}
 
+	registry.mutex.Lock()
+	defer registry.mutex.Unlock()
+	registry.processors = processors
+
 	if len(processors) == 0 {
 		return fmt.Errorf("No processors found in %s", registry.definitionsPath)
 	}
 
-	registry.mutex.Lock()
-	defer registry.mutex.Unlock()
-	registry.processors = processors
 	return nil
 }
 
