@@ -4,7 +4,27 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"time"
 )
+
+func makeRandomPath(baseDir Path) (Path, error) {
+	name := fmt.Sprintf("%d", time.Now().UnixNano())
+	path := baseDir.JoinPath(Path(name))
+
+	// If the path somehow already exists, try again
+	for path.Exists() {
+		name = fmt.Sprintf("%d", time.Now().UnixNano())
+		path = baseDir.JoinPath(Path(name))
+	}
+
+	err := path.Mkdir()
+
+	if err != nil {
+		return baseDir, err
+	}
+
+	return path, nil
+}
 
 func CopyFile(source, destination Path) error {
 	if source.IsDir() {

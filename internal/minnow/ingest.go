@@ -25,14 +25,13 @@ func NewDirectoryIngester(ingestDirChan chan IngestDirInfo, dispatchChan chan Di
 
 func (ingester *DirectoryIngester) Run() {
 	for ingestDirInfo := range ingester.ingestDirChan {
-		pairsToDispatch := make([]DispatchInfo, 0)
 		metadataPaths, _ := ingestDirInfo.IngestPath.Glob("*" + PropertiesExtension)
 
 		for _, metadataPath := range metadataPaths {
 			dataPath := metadataPath.WithSuffix("") // lop off the extension
 
 			if !dataPath.Exists() {
-				ingester.Logger.Print("%s does not have corresponding data file", metadataPath)
+				ingester.Logger.Printf("%s does not have corresponding data file", metadataPath)
 				continue
 			}
 

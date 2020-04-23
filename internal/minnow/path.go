@@ -217,3 +217,44 @@ func (p Path) JoinPath(paths ...Path) Path {
 func (p Path) Name() string {
 	return filepath.Base(string(p))
 }
+
+func (p Path) Parent() Path {
+	return Path(filepath.Dir(string(p)))
+}
+
+func (p Path) Mkdir() error {
+	if p.Exists() {
+		return fmt.Errorf("Cannot make directory %s because it already exists", p)
+	}
+
+	parent := p.Parent()
+	perms, err := parent.Permissions()
+
+	if err != nil {
+		return err
+	}
+
+	// Copy source permissions, making sure that the destination is
+	// at least readable, writable, and executable
+	perms = perms | 0700
+
+	return os.Mkdir(string(p), perms)
+}
+
+func (p Path) WriteBytes(data []byte) error {
+	outfile, err := os.Open(string(p))
+
+	if err != nil {
+		return err
+	}
+
+	defer outfile.Close()
+
+	_, err = outfile.Write(data)
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

@@ -101,20 +101,20 @@ func (processor Processor) GetId() ProcessorId {
 
 func (processor Processor) Run(inputPath, outputPath Path, processedBy []ProcessorId, ingestDirChan chan<- IngestDirInfo) error {
 	cmd := exec.Command(string(processor.executePath), string(inputPath), string(outputPath))
-	processor.logger.Print("Processor %s running %s", processor.name, cmd.String())
+	processor.logger.Printf("Processor %s running %s", processor.name, cmd.String())
 	stdoutStderr, err := cmd.CombinedOutput()
 
 	if err != nil {
-		processor.logger.Print("Processor %s returned error: %s", processor.name, err.Error())
+		processor.logger.Printf("Processor %s returned error: %s", processor.name, err.Error())
 		return err
 	}
 
-	processor.logger.Print("Processor %s completed successfully")
+	processor.logger.Print("Processor completed successfully")
 	processorOutputPath := outputPath.JoinPath("processor_output.txt")
 	err = processorOutputPath.WriteBytes(stdoutStderr)
 
 	if err != nil {
-		processor.logger.Print("Processor %s could not write output to %s", processor.name, processorOutputPath)
+		processor.logger.Printf("Processor %s could not write output to %s", processor.name, processorOutputPath)
 		// don't return the error here, just log it
 	}
 

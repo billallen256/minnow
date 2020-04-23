@@ -41,17 +41,17 @@ func (dispatcher *Dispatcher) Run() {
 		matchingProcessors := dispatcher.processorReg.MatchingProcessors(metadata)
 
 		for _, processor := range matchingProcessors {
-			inputPath, err := makeRandomPath(dispatcher.workPath).Resolve()
+			inputPath, err := makeRandomPath(dispatcher.workPath)
 
 			if err != nil {
-				dispatcher.logger.Print("Error creating input path for dispatch: %s", err.Error())
+				dispatcher.logger.Printf("Error creating input path for dispatch: %s", err.Error())
 				continue
 			}
 
-			outputPath, err := makeRandomPath(dispatcher.workPath).Resolve()
+			outputPath, err := makeRandomPath(dispatcher.workPath)
 
 			if err != nil {
-				dispatcher.logger.Print("Error creating output path for dispatch: %s", err.Error())
+				dispatcher.logger.Printf("Error creating output path for dispatch: %s", err.Error())
 				continue
 			}
 
@@ -59,14 +59,14 @@ func (dispatcher *Dispatcher) Run() {
 			err = CopyFile(dispatchInfo.MetadataPath, inputPath)
 
 			if err != nil {
-				dispatcher.logger.Print("Error copying metadata to work path: %s", err.Error())
+				dispatcher.logger.Printf("Error copying metadata to work path: %s", err.Error())
 				continue
 			}
 
 			// copy data into the new input path
 			err = CopyFile(dispatchInfo.DataPath, inputPath)
 			if err != nil {
-				dispatcher.logger.Print("Error copying data to work path: %s", err.Error())
+				dispatcher.logger.Printf("Error copying data to work path: %s", err.Error())
 				continue
 			}
 
