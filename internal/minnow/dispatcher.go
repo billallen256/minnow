@@ -12,6 +12,16 @@ type DispatchInfo struct {
 	ProcessedBy  []ProcessorId
 }
 
+func (info DispatchInfo) AlreadyProcessedBy(processorId ProcessorId) bool {
+	for _, id := range info.ProcessedBy {
+		if id == processorId {
+			return true
+		}
+	}
+
+	return false
+}
+
 type Dispatcher struct {
 	workPath      Path
 	dispatchChan  chan DispatchInfo
@@ -41,6 +51,11 @@ func (dispatcher *Dispatcher) Run() {
 		matchingProcessors := dispatcher.processorReg.MatchingProcessors(metadata)
 
 		for _, processor := range matchingProcessors {
+			if dispatchInfo.AlreadyProcessedBy(processor.GetId()) {
+				dispatcher.logger.Printf("Data at %s already processed by processor %s. Will not process again.", dispatchInfo.DataPath, processor.GetId())
+				continue
+			}
+
 			inputPath, err := makeRandomPath(dispatcher.workPath)
 
 			if err != nil {

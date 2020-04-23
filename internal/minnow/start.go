@@ -9,7 +9,7 @@ import (
 func Start(args []string) int {
 	logger := log.New(os.Stdout, "Minnow: ", 0)
 
-	if len(args) != 1 {
+	if len(args) != 2 {
 		logger.Print("Must specify a config file")
 		return 1
 	}
