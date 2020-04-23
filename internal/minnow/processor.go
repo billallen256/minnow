@@ -34,7 +34,7 @@ func NewProcessor(definitionPath Path) (Processor, error) {
 		return Processor{}, fmt.Errorf("Processor config file does not exist: %s", configPath)
 	}
 
-	config, err := parseProcessorConfig(configPath)
+	config, err := parseProcessorConfig(configPath, definitionPath)
 
 	if err != nil {
 		return Processor{}, err
@@ -45,8 +45,8 @@ func NewProcessor(definitionPath Path) (Processor, error) {
 	return Processor{name, definitionPath, config.ExecutePath, config.Hook, logger}, nil
 }
 
-func parseProcessorConfig(path Path) (ProcessorConfig, error) {
-	configProperties, err := PropertiesFromFile(path)
+func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, error) {
+	configProperties, err := PropertiesFromFile(configPath)
 
 	if err != nil {
 		return ProcessorConfig{}, err
@@ -58,7 +58,7 @@ func parseProcessorConfig(path Path) (ProcessorConfig, error) {
 		return ProcessorConfig{}, fmt.Errorf("Processor config missing execute_file property")
 	}
 
-	executePath, err := path.JoinPath(Path(executeString)).Resolve()
+	executePath, err := definitionPath.JoinPath(Path(executeString)).Resolve()
 
 	if err != nil {
 		return ProcessorConfig{}, err
@@ -70,7 +70,7 @@ func parseProcessorConfig(path Path) (ProcessorConfig, error) {
 		return ProcessorConfig{}, fmt.Errorf("Processor config missing hook_file property")
 	}
 
-	hookPath, err := path.JoinPath(Path(hookPathString)).Resolve()
+	hookPath, err := definitionPath.JoinPath(Path(hookPathString)).Resolve()
 
 	if err != nil {
 		return ProcessorConfig{}, err
