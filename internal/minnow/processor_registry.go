@@ -1,6 +1,7 @@
 package minnow
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -66,6 +67,10 @@ func (registry *ProcessorRegistry) BuildProcessorMap() error {
 		}
 
 		processors[processor.GetId()] = processor
+	}
+
+	if len(processors) == 0 {
+		return fmt.Errorf("No processors found in %s", registry.definitionsPath)
 	}
 
 	registry.mutex.Lock()
