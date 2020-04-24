@@ -13,14 +13,14 @@ type ProcessorId Path
 type Processor struct {
 	name           string
 	definitionPath Path
-	executePath    Path
+	executable     string
 	hook           Hook
 	logger         *log.Logger
 }
 
 type ProcessorConfig struct {
-	ExecutePath Path
-	Hook        Hook
+	Executable string
+	Hook       Hook
 }
 
 func NewProcessor(definitionPath Path) (Processor, error) {
@@ -42,7 +42,7 @@ func NewProcessor(definitionPath Path) (Processor, error) {
 
 	name := definitionPath.Name()
 	logger := log.New(os.Stdout, name+": ", 0)
-	return Processor{name, definitionPath, config.ExecutePath, config.Hook, logger}, nil
+	return Processor{name, definitionPath, config.Executable, config.Hook, logger}, nil
 }
 
 func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, error) {
@@ -52,16 +52,16 @@ func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, err
 		return ProcessorConfig{}, err
 	}
 
-	executeString, found := configProperties["execute_file"]
+	executable, found := configProperties["executable"]
 
 	if !found {
-		return ProcessorConfig{}, fmt.Errorf("Processor config missing execute_file property")
+		return ProcessorConfig{}, fmt.Errorf("Processor config missing executable property")
 	}
 
-	executePath, err := definitionPath.JoinPath(Path(executeString)).Resolve()
+	executablePath := definitionPath.JoinPath(Path(executable))
 
-	if err != nil {
-		return ProcessorConfig{}, err
+	if !executablePath.Exists() {
+		return ProcessorConfig{}, fmt.Errorf("Could not find executable at %s", executablePath)
 	}
 
 	hookPathString, found := configProperties["hook_file"]
@@ -89,7 +89,7 @@ func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, err
 			return ProcessorConfig{}, err
 		}
 
-		return ProcessorConfig{executePath, hook}, nil
+		return ProcessorConfig{executable, hook}, nil
 	}
 
 	return ProcessorConfig{}, fmt.Errorf("Unknown hook_type %s", hookType)
@@ -100,7 +100,8 @@ func (processor Processor) GetId() ProcessorId {
 }
 
 func (processor Processor) Run(inputPath, outputPath Path, processedBy []ProcessorId, ingestDirChan chan<- IngestDirInfo) error {
-	cmd := exec.Command(string(processor.executePath), string(inputPath), string(outputPath))
+	cmd := exec.Command("./"+processor.executable, string(inputPath), string(outputPath))
+	cmd.Dir = string(processor.definitionPath) // set the working directory for the command
 	processor.logger.Printf("Processor %s running %s", processor.name, cmd.String())
 	stdoutStderr, err := cmd.CombinedOutput()
 

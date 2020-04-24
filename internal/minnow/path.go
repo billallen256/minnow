@@ -258,3 +258,31 @@ func (p Path) WriteBytes(data []byte) error {
 
 	return nil
 }
+
+func (p Path) Unlink() error {
+	if p.IsDir() {
+		return fmt.Errorf("%s is a directory.  Use Rmdir() instead.", p)
+	}
+
+	return os.Remove(string(p))
+}
+
+func (p Path) Rmdir() error {
+	if !p.IsDir() {
+		return fmt.Errorf("%s is not a directory.  Use Unlink() instead.", p)
+	}
+
+	return os.Remove(string(p))
+}
+
+func (p Path) RmdirRecursive() error {
+	if !p.IsDir() {
+		return fmt.Errorf("%s is not a directory.  Use Unlink() instead.", p)
+	}
+
+	return os.RemoveAll(string(p))
+}
+
+func (p Path) Rename(target Path) error {
+	return os.Rename(string(p), string(target))
+}

@@ -40,7 +40,7 @@ func Start(args []string) int {
 		return 1
 	}
 
-	directoryIngester := NewDirectoryIngester(ingestDirChan, dispatchChan)
+	directoryIngester := NewDirectoryIngester(config.WorkPath, ingestDirChan, dispatchChan)
 
 	go dispatcher.Run()
 	go directoryIngester.Run()
