@@ -104,6 +104,13 @@ func (processor Processor) Run(inputPath, outputPath Path, processedBy []Process
 	cmd.Dir = string(processor.definitionPath) // set the working directory for the command
 	processor.logger.Printf("Processor %s running %s", processor.name, cmd.String())
 	stdoutStderr, err := cmd.CombinedOutput()
+	processorOutputPath := outputPath.JoinPath("processor_output.txt")
+	outputErr := processorOutputPath.WriteBytes(stdoutStderr)
+
+	if outputErr != nil {
+		processor.logger.Printf("Processor %s could not write stdout/stderr to %s: %s", processor.name, processorOutputPath, outputErr.Error())
+		// don't return the error here, just log it
+	}
 
 	if err != nil {
 		processor.logger.Printf("Processor %s returned error: %s", processor.name, err.Error())
@@ -111,14 +118,6 @@ func (processor Processor) Run(inputPath, outputPath Path, processedBy []Process
 	}
 
 	processor.logger.Print("Processor completed successfully")
-	processorOutputPath := outputPath.JoinPath("processor_output.txt")
-	err = processorOutputPath.WriteBytes(stdoutStderr)
-
-	if err != nil {
-		processor.logger.Printf("Processor %s could not write output to %s", processor.name, processorOutputPath)
-		// don't return the error here, just log it
-	}
-
 	ingestDirChan <- IngestDirInfo{outputPath, time.Duration(0), append(processedBy, processor.GetId())}
 	return nil
 }

@@ -242,7 +242,7 @@ func (p Path) Mkdir() error {
 }
 
 func (p Path) WriteBytes(data []byte) error {
-	outfile, err := os.Open(string(p))
+	outfile, err := os.Create(string(p))
 
 	if err != nil {
 		return err

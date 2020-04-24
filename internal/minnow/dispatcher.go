@@ -70,6 +70,22 @@ func (dispatcher *Dispatcher) Run() {
 				continue
 			}
 
+			// Need to resolve the input and output paths so
+			// clean, absolute paths get passed to the processor.
+			inputPath, err = inputPath.Resolve()
+
+			if err != nil {
+				dispatcher.logger.Print(err.Error())
+				continue
+			}
+
+			outputPath, err = outputPath.Resolve()
+
+			if err != nil {
+				dispatcher.logger.Print(err.Error())
+				continue
+			}
+
 			// copy metadata into the new input path
 			err = CopyFile(dispatchInfo.MetadataPath, inputPath)
 
