@@ -104,7 +104,7 @@ func (processor Processor) Run(inputPath, outputPath Path, processedBy []Process
 	cmd.Dir = string(processor.definitionPath) // set the working directory for the command
 	processor.logger.Printf("Processor %s running %s", processor.name, cmd.String())
 	stdoutStderr, err := cmd.CombinedOutput()
-	processorOutputPath := outputPath.JoinPath("processor_output.txt")
+	processorOutputPath := outputPath.JoinPath(Path(fmt.Sprintf("_%s_output.txt", processor.name)))
 	outputErr := processorOutputPath.WriteBytes(stdoutStderr)
 
 	if outputErr != nil {
