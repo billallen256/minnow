@@ -13,9 +13,9 @@ type DispatchInfo struct {
 }
 
 type RunRequest struct {
-	inputPath Path
-	outputPath Path
-	processedBy []ProcessorId
+	inputPath     Path
+	outputPath    Path
+	processedBy   []ProcessorId
 	ingestDirChan chan IngestDirInfo
 }
 
@@ -30,11 +30,11 @@ func (info DispatchInfo) AlreadyProcessedBy(processorId ProcessorId) bool {
 }
 
 type Dispatcher struct {
-	workPath      Path
-	dispatchChan  chan DispatchInfo
-	ingestDirChan chan IngestDirInfo
-	processorRegistry  *ProcessorRegistry
-	logger        *log.Logger
+	workPath          Path
+	dispatchChan      chan DispatchInfo
+	ingestDirChan     chan IngestDirInfo
+	processorRegistry *ProcessorRegistry
+	logger            *log.Logger
 }
 
 func NewDispatcher(workPath Path, dispatchChan chan DispatchInfo, ingestDirChan chan IngestDirInfo, processorRegistry *ProcessorRegistry) (*Dispatcher, error) {

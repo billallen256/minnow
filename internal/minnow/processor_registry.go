@@ -10,7 +10,7 @@ import (
 
 type ProcessorRegistry struct {
 	definitionsPath Path
-	processorPools      map[ProcessorId]*ProcessorPool
+	processorPools  map[ProcessorId]*ProcessorPool
 	mutex           *sync.RWMutex
 	logger          *log.Logger
 }

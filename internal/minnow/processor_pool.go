@@ -1,12 +1,12 @@
 package minnow
 
 type ProcessorPool struct {
-	processor Processor
+	processor       Processor
 	runRequestQueue chan RunRequest
 }
 
 func NewProcessorPool(processor Processor, poolSize int) *ProcessorPool {
-	runRequestQueue := make(chan RunRequest, 100 * poolSize)
+	runRequestQueue := make(chan RunRequest, 100*poolSize)
 
 	for i := 0; i < poolSize; i++ {
 		go processor.Run(runRequestQueue)
