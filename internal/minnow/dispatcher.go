@@ -12,6 +12,13 @@ type DispatchInfo struct {
 	ProcessedBy  []ProcessorId
 }
 
+type RunRequest struct {
+	inputPath Path
+	outputPath Path
+	processedBy []ProcessorId
+	ingestDirChan chan IngestDirInfo
+}
+
 func (info DispatchInfo) AlreadyProcessedBy(processorId ProcessorId) bool {
 	for _, id := range info.ProcessedBy {
 		if id == processorId {
@@ -26,17 +33,17 @@ type Dispatcher struct {
 	workPath      Path
 	dispatchChan  chan DispatchInfo
 	ingestDirChan chan IngestDirInfo
-	processorReg  *ProcessorRegistry
+	processorRegistry  *ProcessorRegistry
 	logger        *log.Logger
 }
 
-func NewDispatcher(workPath Path, dispatchChan chan DispatchInfo, ingestDirChan chan IngestDirInfo, processorReg *ProcessorRegistry) (*Dispatcher, error) {
+func NewDispatcher(workPath Path, dispatchChan chan DispatchInfo, ingestDirChan chan IngestDirInfo, processorRegistry *ProcessorRegistry) (*Dispatcher, error) {
 	if !workPath.Exists() {
 		return nil, fmt.Errorf("Work path does not exist: %s", workPath)
 	}
 
 	logger := log.New(os.Stdout, "Dispatcher: ", 0)
-	return &Dispatcher{workPath, dispatchChan, ingestDirChan, processorReg, logger}, nil
+	return &Dispatcher{workPath, dispatchChan, ingestDirChan, processorRegistry, logger}, nil
 }
 
 func (dispatcher *Dispatcher) Run() {
@@ -48,11 +55,11 @@ func (dispatcher *Dispatcher) Run() {
 			continue
 		}
 
-		matchingProcessors := dispatcher.processorReg.MatchingProcessors(metadata)
+		matchingProcessorIds := dispatcher.processorRegistry.MatchingProcessorIds(metadata)
 
-		for _, processor := range matchingProcessors {
-			if dispatchInfo.AlreadyProcessedBy(processor.GetId()) {
-				dispatcher.logger.Printf("Data at %s already processed by processor %s. Will not process again.", dispatchInfo.DataPath, processor.GetId())
+		for _, processorId := range matchingProcessorIds {
+			if dispatchInfo.AlreadyProcessedBy(processorId) {
+				dispatcher.logger.Printf("Data at %s already processed by processor %s. Will not process again.", dispatchInfo.DataPath, processorId)
 				continue
 			}
 
@@ -71,7 +78,7 @@ func (dispatcher *Dispatcher) Run() {
 			}
 
 			// Need to resolve the input and output paths so
-			// clean, absolute paths get passed to the processor.
+			// clean, _absolute_ paths get passed to the processor.
 			inputPath, err = inputPath.Resolve()
 
 			if err != nil {
@@ -106,7 +113,8 @@ func (dispatcher *Dispatcher) Run() {
 			processedByCopy := make([]ProcessorId, len(dispatchInfo.ProcessedBy))
 			copy(processedByCopy, dispatchInfo.ProcessedBy)
 
-			go processor.Run(inputPath, outputPath, processedByCopy, dispatcher.ingestDirChan)
+			runRequest := RunRequest{inputPath, outputPath, processedByCopy, dispatcher.ingestDirChan}
+			dispatcher.processorRegistry.SendToProcessorId(processorId, runRequest)
 		}
 	}
 }

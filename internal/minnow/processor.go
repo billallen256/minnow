@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"strconv"
 	"time"
 )
 
@@ -15,12 +16,14 @@ type Processor struct {
 	definitionPath Path
 	executable     string
 	hook           Hook
+	poolSize       int
 	logger         *log.Logger
 }
 
 type ProcessorConfig struct {
 	Executable string
 	Hook       Hook
+	PoolSize   int
 }
 
 func NewProcessor(definitionPath Path) (Processor, error) {
@@ -42,7 +45,7 @@ func NewProcessor(definitionPath Path) (Processor, error) {
 
 	name := definitionPath.Name()
 	logger := log.New(os.Stdout, name+": ", 0)
-	return Processor{name, definitionPath, config.Executable, config.Hook, logger}, nil
+	return Processor{name, definitionPath, config.Executable, config.Hook, config.PoolSize, logger}, nil
 }
 
 func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, error) {
@@ -64,6 +67,22 @@ func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, err
 		return ProcessorConfig{}, fmt.Errorf("Could not find executable at %s", executablePath)
 	}
 
+	poolSizeString, found := configProperties["pool_size"]
+
+	if !found {
+		poolSizeString = "5"
+	}
+
+	poolSize, err := strconv.Atoi(poolSizeString)
+
+	if err != nil {
+		return ProcessorConfig{}, fmt.Errorf("Invalid value for pool_size: %s", err.Error())
+	}
+
+	if poolSize < 0 {
+		return ProcessorConfig{}, fmt.Errorf("pool_size must be a positive value")
+	}
+
 	hookPathString, found := configProperties["hook_file"]
 
 	if !found {
@@ -76,6 +95,7 @@ func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, err
 		return ProcessorConfig{}, err
 	}
 
+	// handle hook_type last since it defaults to fail
 	hookType, found := configProperties["hook_type"]
 
 	if !found {
@@ -89,7 +109,7 @@ func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, err
 			return ProcessorConfig{}, err
 		}
 
-		return ProcessorConfig{executable, hook}, nil
+		return ProcessorConfig{executable, hook, poolSize}, nil
 	}
 
 	return ProcessorConfig{}, fmt.Errorf("Unknown hook_type %s", hookType)
@@ -99,12 +119,22 @@ func (processor Processor) GetId() ProcessorId {
 	return ProcessorId(processor.definitionPath)
 }
 
-func (processor Processor) Run(inputPath, outputPath Path, processedBy []ProcessorId, ingestDirChan chan<- IngestDirInfo) error {
-	cmd := exec.Command("./"+processor.executable, string(inputPath), string(outputPath))
+func (processor Processor) GetPoolSize() int {
+	return processor.poolSize
+}
+
+func (processor Processor) Run(runRequestQueue chan RunRequest) {
+	for runRequest := range runRequestQueue {
+		processor.RunCommand(runRequest)
+	}
+}
+
+func (processor Processor) RunCommand(runRequest RunRequest) error {
+	cmd := exec.Command("./"+processor.executable, string(runRequest.inputPath), string(runRequest.outputPath))
 	cmd.Dir = string(processor.definitionPath) // set the working directory for the command
 	processor.logger.Printf("Processor %s running %s", processor.name, cmd.String())
 	stdoutStderr, err := cmd.CombinedOutput()
-	processorOutputPath := outputPath.JoinPath(Path(fmt.Sprintf("_%s_output.txt", processor.name)))
+	processorOutputPath := runRequest.outputPath.JoinPath(Path(fmt.Sprintf("_%s_output.txt", processor.name)))
 	outputErr := processorOutputPath.WriteBytes(stdoutStderr)
 
 	if outputErr != nil {
@@ -118,7 +148,7 @@ func (processor Processor) Run(inputPath, outputPath Path, processedBy []Process
 	}
 
 	processor.logger.Print("Processor completed successfully")
-	ingestDirChan <- IngestDirInfo{outputPath, time.Duration(0), append(processedBy, processor.GetId())}
+	runRequest.ingestDirChan <- IngestDirInfo{runRequest.outputPath, time.Duration(0), append(runRequest.processedBy, processor.GetId())}
 	return nil
 }
 
