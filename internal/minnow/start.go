@@ -47,7 +47,7 @@ func Start(args []string) int {
 	go processorRegistry.Run()
 
 	for range time.Tick(config.IngestMinAge) {
-		ingestDirChan <- IngestDirInfo{config.IngestPath, config.IngestMinAge, make([]ProcessorId, 0)}
+		ingestDirChan <- IngestDirInfo{config.IngestPath, config.IngestMinAge, make([]ProcessorId, 0), false}
 	}
 
 	return 0

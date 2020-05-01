@@ -7,9 +7,10 @@ import (
 )
 
 type IngestDirInfo struct {
-	IngestPath  Path
-	MinAge      time.Duration
-	ProcessedBy []ProcessorId
+	IngestPath         Path
+	MinAge             time.Duration
+	ProcessedBy        []ProcessorId
+	RemoveOnceIngested bool
 }
 
 type DirectoryIngester struct {
@@ -89,6 +90,10 @@ func (ingester *DirectoryIngester) Run() {
 
 				dispatchInfo := DispatchInfo{metadataPath, dataPath, ingestDirInfo.ProcessedBy}
 				ingester.dispatchChan <- dispatchInfo
+
+				if ingestDirInfo.RemoveOnceIngested {
+					ingestDirInfo.IngestPath.RmdirRecursive()
+				}
 			}
 		}
 	}

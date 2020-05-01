@@ -130,11 +130,12 @@ func (processor Processor) Run(runRequestQueue chan RunRequest) {
 }
 
 func (processor Processor) RunCommand(runRequest RunRequest) error {
-	cmd := exec.Command("./"+processor.executable, string(runRequest.inputPath), string(runRequest.outputPath))
+	defer runRequest.InputPath.RmdirRecursive() // make sure the input directory gets removed
+	cmd := exec.Command("./"+processor.executable, string(runRequest.InputPath), string(runRequest.OutputPath))
 	cmd.Dir = string(processor.definitionPath) // set the working directory for the command
 	processor.logger.Printf("Processor %s running %s", processor.name, cmd.String())
 	stdoutStderr, err := cmd.CombinedOutput()
-	processorOutputPath := runRequest.outputPath.JoinPath(Path(fmt.Sprintf("_%s_output.txt", processor.name)))
+	processorOutputPath := runRequest.OutputPath.JoinPath(Path(fmt.Sprintf("_%s_output.txt", processor.name)))
 	outputErr := processorOutputPath.WriteBytes(stdoutStderr)
 
 	if outputErr != nil {
@@ -148,7 +149,8 @@ func (processor Processor) RunCommand(runRequest RunRequest) error {
 	}
 
 	processor.logger.Print("Processor completed successfully")
-	runRequest.ingestDirChan <- IngestDirInfo{runRequest.outputPath, time.Duration(0), append(runRequest.processedBy, processor.GetId())}
+	processedBy := append(runRequest.ProcessedBy, processor.GetId())
+	runRequest.IngestDirChan <- IngestDirInfo{runRequest.OutputPath, time.Duration(0), processedBy, true}
 	return nil
 }
 

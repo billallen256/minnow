@@ -13,10 +13,10 @@ type DispatchInfo struct {
 }
 
 type RunRequest struct {
-	inputPath     Path
-	outputPath    Path
-	processedBy   []ProcessorId
-	ingestDirChan chan IngestDirInfo
+	InputPath     Path
+	OutputPath    Path
+	ProcessedBy   []ProcessorId
+	IngestDirChan chan IngestDirInfo
 }
 
 func (info DispatchInfo) AlreadyProcessedBy(processorId ProcessorId) bool {
