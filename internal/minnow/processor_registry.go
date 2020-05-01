@@ -68,6 +68,7 @@ func (registry *ProcessorRegistry) BuildProcessorMap() error {
 
 		processorPool := NewProcessorPool(processor, processor.GetPoolSize())
 		processorPools[processor.GetId()] = processorPool
+		registry.logger.Printf("Registered processor %s", processor.GetId())
 	}
 
 	registry.mutex.Lock()
