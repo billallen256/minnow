@@ -26,7 +26,7 @@ func NewDirectoryIngester(workPath Path, ingestDirChan chan IngestDirInfo, dispa
 }
 
 func moveToRandomPath(workPath, metadataPath, dataPath Path) (Path, Path, error) {
-	randomPath, err := makeRandomPath(workPath)
+	randomPath, err := makeRandomPath(workPath, "dispatch")
 
 	if err != nil {
 		return metadataPath, dataPath, err
@@ -92,7 +92,11 @@ func (ingester *DirectoryIngester) Run() {
 				ingester.dispatchChan <- dispatchInfo
 
 				if ingestDirInfo.RemoveOnceIngested {
-					ingestDirInfo.IngestPath.RmdirRecursive()
+					err := ingestDirInfo.IngestPath.RmdirRecursive()
+
+					if err != nil {
+						ingester.logger.Printf("Could not remove ingest dir: %s", err.Error())
+					}
 				}
 			}
 		}

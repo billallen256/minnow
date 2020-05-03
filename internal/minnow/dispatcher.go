@@ -63,14 +63,21 @@ func (dispatcher *Dispatcher) Run() {
 				continue
 			}
 
-			inputPath, err := makeRandomPath(dispatcher.workPath)
+			processorName, err := dispatcher.processorRegistry.ProcessorNameForId(processorId)
+
+			if err != nil {
+				dispatcher.logger.Print(err.Error())
+				processorName = "unknownprocessor"
+			}
+
+			inputPath, err := makeRandomPath(dispatcher.workPath, processorName+"-input")
 
 			if err != nil {
 				dispatcher.logger.Printf("Error creating input path for dispatch: %s", err.Error())
 				continue
 			}
 
-			outputPath, err := makeRandomPath(dispatcher.workPath)
+			outputPath, err := makeRandomPath(dispatcher.workPath, processorName+"-output")
 
 			if err != nil {
 				dispatcher.logger.Printf("Error creating output path for dispatch: %s", err.Error())
@@ -116,5 +123,9 @@ func (dispatcher *Dispatcher) Run() {
 			runRequest := RunRequest{inputPath, outputPath, processedByCopy, dispatcher.ingestDirChan}
 			dispatcher.processorRegistry.SendToProcessorId(processorId, runRequest)
 		}
+
+		// copies have been sent to all matching processors,
+		// so the original is no longer needed
+		dispatchInfo.MetadataPath.Parent().RmdirRecursive()
 	}
 }

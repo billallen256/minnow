@@ -114,3 +114,14 @@ func (registry *ProcessorRegistry) SendToProcessorId(processorId ProcessorId, ru
 
 	return fmt.Errorf("Could not send RunRequest to ProcessorId %s", processorId)
 }
+
+func (registry *ProcessorRegistry) ProcessorNameForId(processorId ProcessorId) (string, error) {
+	registry.mutex.RLock()
+	defer registry.mutex.RUnlock()
+
+	if processorPool, found := registry.processorPools[processorId]; found {
+		return processorPool.GetProcessorName(), nil
+	}
+
+	return "", fmt.Errorf("Could not find name for ProcessorId %s", processorId)
+}

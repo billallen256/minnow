@@ -23,6 +23,10 @@ func (pool *ProcessorPool) Stop() {
 	close(pool.runRequestQueue)
 }
 
+func (pool *ProcessorPool) GetProcessorName() string {
+	return pool.processor.GetName()
+}
+
 func (pool *ProcessorPool) GetProcessorId() ProcessorId {
 	return pool.processor.GetId()
 }

@@ -4,11 +4,13 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"time"
 )
 
-func makeRandomPath(baseDir Path) (Path, error) {
-	name := fmt.Sprintf("%d", time.Now().UnixNano())
+func makeRandomPath(baseDir Path, purpose string) (Path, error) {
+	purpose = strings.ReplaceAll(purpose, " ", "")
+	name := fmt.Sprintf("%s-%d", purpose, time.Now().UnixNano())
 	path := baseDir.JoinPath(Path(name))
 
 	// If the path somehow already exists, try again

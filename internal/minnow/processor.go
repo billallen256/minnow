@@ -119,6 +119,10 @@ func (processor Processor) GetId() ProcessorId {
 	return ProcessorId(processor.definitionPath)
 }
 
+func (processor Processor) GetName() string {
+	return processor.name
+}
+
 func (processor Processor) GetPoolSize() int {
 	return processor.poolSize
 }
@@ -130,7 +134,6 @@ func (processor Processor) Run(runRequestQueue chan RunRequest) {
 }
 
 func (processor Processor) RunCommand(runRequest RunRequest) error {
-	defer runRequest.InputPath.RmdirRecursive() // make sure the input directory gets removed
 	cmd := exec.Command("./"+processor.executable, string(runRequest.InputPath), string(runRequest.OutputPath))
 	cmd.Dir = string(processor.definitionPath) // set the working directory for the command
 	processor.logger.Printf("Processor %s running %s", processor.name, cmd.String())
@@ -151,6 +154,12 @@ func (processor Processor) RunCommand(runRequest RunRequest) error {
 	processor.logger.Print("Processor completed successfully")
 	processedBy := append(runRequest.ProcessedBy, processor.GetId())
 	runRequest.IngestDirChan <- IngestDirInfo{runRequest.OutputPath, time.Duration(0), processedBy, true}
+	err = runRequest.InputPath.RmdirRecursive() // make sure the input directory gets removed
+
+	if err != nil {
+		processor.logger.Printf("Could not remove input path: %s", err.Error())
+	}
+
 	return nil
 }
 
