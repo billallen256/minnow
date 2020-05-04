@@ -8,14 +8,20 @@ import (
 	"time"
 )
 
+func nanoTimestamp(now time.Time) string {
+	return fmt.Sprintf("%04d-%02d-%02dT%02d:%02d:%02d:%09d",
+		now.Year(), now.Month(), now.Day(),
+		now.Hour(), now.Minute(), now.Second(), now.Nanosecond())
+}
+
 func makeRandomPath(baseDir Path, purpose string) (Path, error) {
 	purpose = strings.ReplaceAll(purpose, " ", "")
-	name := fmt.Sprintf("%s-%d", purpose, time.Now().UnixNano())
+	name := fmt.Sprintf("%s-%s", purpose, nanoTimestamp(time.Now()))
 	path := baseDir.JoinPath(Path(name))
 
 	// If the path somehow already exists, try again
 	for path.Exists() {
-		name = fmt.Sprintf("%d", time.Now().UnixNano())
+		name = fmt.Sprintf("%s-%s", purpose, nanoTimestamp(time.Now()))
 		path = baseDir.JoinPath(Path(name))
 	}
 
