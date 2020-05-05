@@ -10,7 +10,6 @@ type Config struct {
 	IngestPath               Path
 	IngestMinAge             time.Duration
 	WorkPath                 Path
-	WorkAgeOff               time.Duration
 	ProcessorDefinitionsPath Path
 }
 
@@ -73,23 +72,6 @@ func ParseConfig(configProperties Properties) (Config, error) {
 	if !config.WorkPath.Exists() {
 		return Config{}, fmt.Errorf("work_dir does not exist at %s", config.WorkPath)
 	}
-
-	//
-	// work_age_off
-	//
-	workAgeOffStr, found := configProperties["work_age_off"]
-
-	if !found {
-		workAgeOffStr = "172800" // set default of two days
-	}
-
-	workAgeOffInt, err := strconv.Atoi(workAgeOffStr)
-
-	if err != nil {
-		return Config{}, fmt.Errorf("work_age_off must be an integer representing seconds")
-	}
-
-	config.WorkAgeOff = time.Duration(workAgeOffInt) * time.Second
 
 	//
 	// processor_definitions_dir

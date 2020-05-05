@@ -38,10 +38,6 @@ func TestParseConfig(t *testing.T) {
 		t.Errorf("Incorrect WorkPath")
 	}
 
-	if config.WorkAgeOff != time.Duration(86400)*time.Second {
-		t.Errorf("Incorrect WorkAgeOff")
-	}
-
 	if config.ProcessorDefinitionsPath != "/usr" {
 		t.Errorf("Incorrect ProcessorDefinitionsPath")
 	}
