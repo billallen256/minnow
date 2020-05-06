@@ -40,7 +40,7 @@ executable = start.sh
 hook_file = hook.properties
 ```
 
-### Start Script
+### Start Script (executable)
 Minnow will pass only two parameters to the start script: an input directory to read files from, and an output directory to write files to.  The start script can then use them, or pass them on to a more complex script.  For example, `start.sh` could contain the following:
 
 ```sh
@@ -50,6 +50,18 @@ Minnow will pass only two parameters to the start script: an input directory to 
 # param 1 is the input directory to read from
 # param 2 is the output directory to write to
 python3 amazing.py $@
+```
+
+Calling containers is also straight forward, just bind the input and output directories so they are accessible within the container.  Here's how to do it with Singularity (note that filesystem overlay must be enabled):
+
+```sh
+singularity exec --no-home --bind $1:/input:ro,$2:/output:rw /path/to/awesome.sif
+```
+
+And for Docker:
+
+```sh
+docker run --rm -v $1:/input -v $2:/output awesome:latest
 ```
 
 ### Hook File
@@ -77,6 +89,9 @@ size = huge
 orientation = front
 style = line
 ```
+
+### Pool Size
+The `config.properties` file can also take an optional `pool_size` parameter to indicate the maximum number of instances of the processor should run simultaneously.  This helps prevent resource-intensive processors from taking over the whole system.  By default, `pool_size` is equal to the number of logical CPU's on the system.
 
 ### Output
 To output data back into minnow, it must go in the output directory that was provided to the start script.  Data/metadata files must come in pairs, or they will be ignored.  For example, if your data file is named `blueprints.dwg`, then there must also be a metadata file called `blueprints.dwg.properties`.  If your script doesn't generate any data, just touch the file so it exists.
@@ -119,3 +134,8 @@ output_data_path.touch()                               # even if there's no data
 ```
 
 The original plan was to use JSON, because JSON is awesome.  But minnow is implemented in Go, and Go does not do well with JSON's dynamic structure and types, even with external dependencies.
+
+## Security Notes
+It's worth mentioning that minnow does not enforce any security constraints itself, and instead relies on the underlying operating system.  Be aware that all processors run as the user that started minnow.  For example, if user A starts minnow and sets `processor_definition_dir` to a path that's writable by users B and C, then users B and C can put *any script* in there, and it will execute as user A and access all of user A's files.  User A better trust users B and C.
+
+One way to help mitigate this concern is to have processors point at trusted containers that have already been reviewed, and to limit the containers' accesses with options like `--net --network=none` for Singularity (see above).

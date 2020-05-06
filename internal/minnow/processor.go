@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"runtime"
 	"strconv"
 	"time"
 )
@@ -67,20 +68,19 @@ func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, err
 		return ProcessorConfig{}, fmt.Errorf("Could not find executable at %s", executablePath)
 	}
 
+	poolSize := runtime.NumCPU()  // set the default
 	poolSizeString, found := configProperties["pool_size"]
 
-	if !found {
-		poolSizeString = "5"
-	}
+	if found {
+		poolSize, err = strconv.Atoi(poolSizeString)
 
-	poolSize, err := strconv.Atoi(poolSizeString)
+		if err != nil {
+			return ProcessorConfig{}, fmt.Errorf("Invalid value for pool_size: %s", err.Error())
+		}
 
-	if err != nil {
-		return ProcessorConfig{}, fmt.Errorf("Invalid value for pool_size: %s", err.Error())
-	}
-
-	if poolSize < 0 {
-		return ProcessorConfig{}, fmt.Errorf("pool_size must be a positive value")
+		if poolSize < 0 {
+			return ProcessorConfig{}, fmt.Errorf("pool_size must be a positive value")
+		}
 	}
 
 	hookPathString, found := configProperties["hook_file"]
