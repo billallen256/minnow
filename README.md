@@ -96,7 +96,12 @@ The `config.properties` file can also take an optional `pool_size` parameter to 
 ### Output
 To output data back into minnow, it must go in the output directory that was provided to the start script.  Data/metadata files must come in pairs, or they will be ignored.  For example, if your data file is named `blueprints.dwg`, then there must also be a metadata file called `blueprints.dwg.properties`.  If your script doesn't generate any data, just touch the file so it exists.
 
-To output data out of minnow, just write it somewhere else in the file system per your project.  In fact, **you'll have to create a processor to subscribe and output the data somewhere else in the file system**, as minnow deletes data that does not have a subscriber from its `work_dir`.
+To output data out of minnow, just write it somewhere else in the file system per your project.  In fact, **you'll have to create a processor to subscribe and output the data somewhere else in the file system**, as minnow deletes data that does not have a subscriber from its `work_dir`.  The output processor can be as simple as creating a hook for the relevant data and putting the following in the start script:
+
+```sh
+#!/bin/sh
+cp -R $1/* /path/to/project/output/
+```
 
 ## Property Files
 Minnow uses a dead-simple file format for configuration and metadata `.properties` files.  The only reserved characters are newline and equals (`=`).  Leading and trailing whitespace is stripped from all keys and values.
@@ -136,6 +141,6 @@ output_data_path.touch()                               # even if there's no data
 The original plan was to use JSON, because JSON is awesome.  But minnow is implemented in Go, and Go does not do well with JSON's dynamic structure and types, even with external dependencies.
 
 ## Security Notes
-It's worth mentioning that minnow does not enforce any security constraints itself, and instead relies on the underlying operating system.  Be aware that all processors run as the user that started minnow.  For example, if user A starts minnow and sets `processor_definition_dir` to a path that's writable by users B and C, then users B and C can put *any script* in there, and it will execute as user A and access all of user A's files.  User A better trust users B and C.
+It's worth mentioning that minnow does not enforce any security constraints itself, and instead relies on the underlying operating system.  Be aware that all processors run as the user that started minnow.  For example, if user A starts minnow and sets `processor_definition_dir` to a path that's writable by users B and C, then users B and C can put *any script* in there, and it will execute as user A, with access to all of user A's files.  User A better trust users B and C.
 
 One way to help mitigate this concern is to have processors point at trusted containers that have already been reviewed, and to limit the containers' accesses with options like `--net --network=none` for Singularity (see above).
