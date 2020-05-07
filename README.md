@@ -33,14 +33,14 @@ Minnow will look for processors in this directory.  Each processor has its own d
 Processors can be hot-swapped while minnow is running by changing the contents of the processor's definition directory.  Note that it's probably best to make changes in a separate directory, then drop the changed files in with an atomic `mv` (move) command.
 
 ## Defining a Processor
-A processor is simply a directory containing a `config.properties` file, a start script (executable), and a hook file.  Minnow parses the processor's `config.properties` file to find the name of the start script and hook file, for example:
+A processor is simply a directory containing a `config.properties` file, a start script, and a hook file.  Minnow parses the processor's `config.properties` file to find the name of the start script and hook file, for example:
 
 ```
-executable = start.sh
+start_script = start.sh
 hook_file = hook.properties
 ```
 
-### Start Script (executable)
+### Start Script
 Minnow will pass only two parameters to the start script: an input directory to read files from, and an output directory to write files to.  The start script can then use them, or pass them on to a more complex script.  For example, `start.sh` could contain the following:
 
 ```sh

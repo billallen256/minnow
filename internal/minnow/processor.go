@@ -15,16 +15,16 @@ type ProcessorId Path
 type Processor struct {
 	name           string
 	definitionPath Path
-	executable     string
+	startScript    string
 	hook           Hook
 	poolSize       int
 	logger         *log.Logger
 }
 
 type ProcessorConfig struct {
-	Executable string
-	Hook       Hook
-	PoolSize   int
+	StartScript string
+	Hook        Hook
+	PoolSize    int
 }
 
 func NewProcessor(definitionPath Path) (Processor, error) {
@@ -46,7 +46,7 @@ func NewProcessor(definitionPath Path) (Processor, error) {
 
 	name := definitionPath.Name()
 	logger := log.New(os.Stdout, name+": ", 0)
-	return Processor{name, definitionPath, config.Executable, config.Hook, config.PoolSize, logger}, nil
+	return Processor{name, definitionPath, config.StartScript, config.Hook, config.PoolSize, logger}, nil
 }
 
 func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, error) {
@@ -56,19 +56,19 @@ func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, err
 		return ProcessorConfig{}, err
 	}
 
-	executable, found := configProperties["executable"]
+	startScript, found := configProperties["start_script"]
 
 	if !found {
-		return ProcessorConfig{}, fmt.Errorf("Processor config missing executable property")
+		return ProcessorConfig{}, fmt.Errorf("Processor config missing start_script property")
 	}
 
-	executablePath := definitionPath.JoinPath(Path(executable))
+	startScriptPath := definitionPath.JoinPath(Path(startScript))
 
-	if !executablePath.Exists() {
-		return ProcessorConfig{}, fmt.Errorf("Could not find executable at %s", executablePath)
+	if !startScriptPath.Exists() {
+		return ProcessorConfig{}, fmt.Errorf("Could not find start_script at %s", startScriptPath)
 	}
 
-	poolSize := runtime.NumCPU()  // set the default
+	poolSize := runtime.NumCPU() // set the default
 	poolSizeString, found := configProperties["pool_size"]
 
 	if found {
@@ -109,7 +109,7 @@ func parseProcessorConfig(configPath, definitionPath Path) (ProcessorConfig, err
 			return ProcessorConfig{}, err
 		}
 
-		return ProcessorConfig{executable, hook, poolSize}, nil
+		return ProcessorConfig{startScript, hook, poolSize}, nil
 	}
 
 	return ProcessorConfig{}, fmt.Errorf("Unknown hook_type %s", hookType)
@@ -134,7 +134,7 @@ func (processor Processor) Run(runRequestQueue chan RunRequest) {
 }
 
 func (processor Processor) RunCommand(runRequest RunRequest) error {
-	cmd := exec.Command("./"+processor.executable, string(runRequest.InputPath), string(runRequest.OutputPath))
+	cmd := exec.Command("./"+processor.startScript, string(runRequest.InputPath), string(runRequest.OutputPath))
 	cmd.Dir = string(processor.definitionPath) // set the working directory for the command
 	processor.logger.Printf("Processor %s running %s", processor.name, cmd.String())
 	stdoutStderr, err := cmd.CombinedOutput()
