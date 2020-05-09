@@ -25,6 +25,9 @@ func (hook BasicPropertiesMatchHook) Matches(matchAgainst Properties) bool {
 			if value != expectedValue {
 				return false
 			}
+		} else {
+			// if expectedKey is outright missing, that's not a match
+			return false
 		}
 	}
 
