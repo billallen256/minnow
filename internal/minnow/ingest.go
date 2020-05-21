@@ -54,6 +54,11 @@ func (ingester *DirectoryIngester) Run() {
 		metadataPaths, _ := ingestDirInfo.IngestPath.Glob("*" + PropertiesExtension)
 
 		for _, metadataPath := range metadataPaths {
+			if !ValidPropertiesFile(metadataPath) {
+				ingester.logger.Printf("Invalid properties file at %s. Skipping...", metadataPath)
+				continue
+			}
+
 			dataPath := metadataPath.WithSuffix("") // lop off the extension
 
 			if !dataPath.Exists() {

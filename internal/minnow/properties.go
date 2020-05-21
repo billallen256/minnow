@@ -55,3 +55,13 @@ func PropertiesFromFile(path Path) (Properties, error) {
 
 	return BytesToProperties(propertiesBytes)
 }
+
+func ValidPropertiesFile(path Path) bool {
+	_, err := PropertiesFromFile(path)
+
+	if err == nil {
+		return true
+	}
+
+	return false
+}
