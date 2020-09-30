@@ -8,7 +8,7 @@ import minnow
 
 class FormatDateProcessor(minnow.Processor):
     def process(self, metadata_file_path, data_file_path, output_path):
-        metadata = minnow.load_metadata(metadata_file_path)
+        metadata = minnow.load_properties(metadata_file_path)
 
         for field in ['year', 'month', 'day', 'hour', 'minute', 'second']:
             metadata[field] = int(metadata[field])
