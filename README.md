@@ -52,6 +52,8 @@ Minnow will pass only two parameters to the start script: an input directory to 
 python3 amazing.py $@
 ```
 
+If you are planning to make a processor in Python, please take a look at the [minnow Python package](https://pypi.org/project/minnow/), and the examples in this repo.
+
 Calling containers is also straight forward, just bind the input and output directories so they are accessible within the container.  Here's how to do it with Singularity (note that filesystem overlay must be enabled):
 
 ```sh
