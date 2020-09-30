@@ -104,39 +104,9 @@ cp -R $1/* /path/to/project/output/
 ```
 
 ## Property Files
-Minnow uses a dead-simple file format for configuration and metadata `.properties` files.  The only reserved characters are newline and equals (`=`).  Leading and trailing whitespace is stripped from all keys and values.
+Minnow uses a dead-simple file format for configuration and metadata in the form of `.properties` files.  The only reserved characters are newline and equals (`=`).  Leading and trailing whitespace is stripped from all keys and values.
 
-This format was chosen so it would be as easy as possible for anyone to implement a parser in their language of choice.  For example, a Python parser can be written in just a few lines:
-
-```python
-from pathlib import Path  # pathlib is awesome, btw
-input_path = Path(sys.argv[1])
-output_path = Path(sys.argv[2])
-metadata_path = list(input_path.glob('*.properties'))[0]
-
-# properties parser starts here
-metadata = metadata_path.read_text().split('\n')
-metadata = [tuple(x.split('=')) for x in metadata if len(x.strip()) > 0]
-metadata = [x for x in metadata if len(x) == 2]
-metadata = {x[0].strip():x[1].strip() for x in metadata}
-```
-
-Writing `.properties` files with Python is also simple:
-
-```python
-metadata = {'type':'blueprints',
-            'orientation':'above',
-            'size':'huge',
-            'style':'line'}
-
-# this turns the dictionary into a string, ready to be written
-metadata_str = '\n'.join(['{} = {}'.format(k, v) for k, v in metadata.items()])
-
-output_metadata_path = output_path.joinpath('blueprints.properties')
-output_metadata_path.write_text(metadata_str)
-output_data_path = output_path.joinpath('blueprints')  # make sure the data file exists
-output_data_path.touch()                               # even if there's no data
-```
+This format was chosen so it would be as easy as possible for anyone to implement a parser in their language of choice.  It only takes a few lines to implement a parser in Python, but for your convenience, one has been provided in the [minnow Python package](https://pypi.org/project/minnow/).
 
 The original plan was to use JSON, because JSON is awesome.  But minnow is implemented in Go, and Go does not do well with JSON's dynamic structure and types, even with external dependencies.
 
@@ -144,3 +114,5 @@ The original plan was to use JSON, because JSON is awesome.  But minnow is imple
 It's worth mentioning that minnow does not enforce any security constraints itself, and instead relies on the underlying operating system.  Be aware that all processors run as the user that started minnow.  For example, if user A starts minnow and sets `processor_definition_dir` to a path that's writable by users B and C, then users B and C can put *any script* in there, and it will execute as user A, with access to all of user A's files.  User A better trust users B and C.
 
 One way to help mitigate this concern is to have processors point at trusted containers that have already been reviewed, and to limit the containers' accesses with options like `--net --network=none` for Singularity (see above).
+
+Other options include creating a `minnow` user to run everything, and using GitOps to review submitted processors.
